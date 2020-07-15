@@ -108,9 +108,9 @@ namespace GetService
             {
                 AmazonLexClient lexClient = new AmazonLexClient(lexRegion);
                 PostTextRequest textRequest = new PostTextRequest();
-                textRequest.UserId = "MailBot1";
-                textRequest.BotAlias = "CONNIENBC";
-                textRequest.BotName = "Connie_NBC";
+                textRequest.UserId = "MailBot";
+                textRequest.BotAlias = "DEV";
+                textRequest.BotName = "NBC_Mailbot_Intents";
                 textRequest.InputText = customerContact;
                 PostTextResponse textRespone = await lexClient.PostTextAsync(textRequest);
                 return textRespone.IntentName;
