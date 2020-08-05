@@ -113,6 +113,7 @@ namespace GetService
                                 cxmServiceArea = "streetcare_services_waste_and_recycling_grounds_maintenance";
                                 break;
                             default:
+                                cxmServiceArea = "general_enquiries";
                                 await SendFailureAsync("Unexpected Intent Returned : " + response, "GetCaseDetailsAsync");
                                 Console.WriteLine("ERROR : Unexpected Intent Returned : " + response);
                                 break;
