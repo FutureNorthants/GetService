@@ -85,10 +85,7 @@ namespace GetService
                     {
                         Console.WriteLine("Service : " + response);
                         switch(response){
-                            case "ContactNBC":
-                                cxmServiceArea = "contact_nbc_councillor_enquiries";
-                                break;
-                            case "CustomerFeedback_NBC":
+                            case "Feedback_CXM":
                                 cxmServiceArea = "customer_feedback_nbc_feedback";
                                 break;
                             case "EnvironmentalHealth":
@@ -103,10 +100,7 @@ namespace GetService
                             case "HousingCustomerServices":
                                 cxmServiceArea = "housing_customer_services";
                                 break;
-                            case "NPHCustomerFeedback":
-                                cxmServiceArea = "nph_customer_feedback";
-                                break;
-                            case "Repairs":
+                            case "HousingRepairs":
                                 cxmServiceArea = "housing_repairs";
                                 break;
                             case "Streetcare":
