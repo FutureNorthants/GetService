@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Amazon.Lambda.Core;
-using System.Diagnostics;
 using System;
 using Amazon.Lex;
 using Amazon;
@@ -13,9 +12,8 @@ using Newtonsoft.Json.Linq;
 using System.Net.Http;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
-using System.Text;
-using System.Net;
-using System.Text.Json;
+using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.Model;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
 
@@ -31,6 +29,8 @@ namespace GetService
         private static String taskToken;
         private static String cxmEndPoint;
         private static String cxmAPIKey;
+        private static String tableName;
+
         private Secrets secrets = null;
 
 
@@ -42,6 +42,35 @@ namespace GetService
                 JObject o = JObject.Parse(input.ToString());
                 caseReference = (string)o.SelectToken("CaseReference");
                 taskToken = (string)o.SelectToken("TaskToken");
+                try
+                {
+                    if (context.InvokedFunctionArn.ToLower().Contains("alpha"))
+                    {
+                        Console.WriteLine("DEV Version");
+                        tableName = "MailBotCasesTest";
+                    }
+                    else if (context.InvokedFunctionArn.ToLower().Contains("beta"))
+                    {
+                        Console.WriteLine("Beta Version");
+                        tableName = "MailBotCasesTest";
+                    }
+                    else if (context.InvokedFunctionArn.ToLower().Contains("prod"))
+                    {
+                        Console.WriteLine("Prod version");
+                        tableName = "MailBotCasesLive";
+                    }
+                    else
+                    {
+                        Console.WriteLine("Undefined Version");
+                        tableName = "MailBotCasesTest";
+                    }
+                }
+                catch(Exception)
+                {
+                    Console.WriteLine("Undefined Version");
+                    tableName = "MailBotCasesTest";
+                }
+ 
                 switch (instance.ToLower())
                 {
                     case "live":
@@ -145,7 +174,7 @@ namespace GetService
             try
             {
                 response.EnsureSuccessStatusCode();
-                return true;
+                return await StoreServiceToDynamoAsync(caseReference,serviceArea);
             }
             catch (Exception error)
             {
@@ -275,6 +304,40 @@ namespace GetService
                 Console.WriteLine("ERROR : SendFailureAsync : " + error.StackTrace);
             }
             await Task.CompletedTask;
+        }
+
+        private async Task<Boolean> StoreServiceToDynamoAsync(String caseReference, String service)
+        {
+            try
+            {
+                AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(primaryRegion);
+                UpdateItemRequest dynamoRequest = new UpdateItemRequest
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>
+                        {
+                              { "CaseReference", new AttributeValue { S = caseReference }}
+                        },
+                    ExpressionAttributeNames = new Dictionary<string, string>()
+                    {
+                        {"#Field", "ProposedService"}
+                    },
+                    ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                    {
+                        {":Value",new AttributeValue {S = service}}
+                    },
+
+                    UpdateExpression = "SET #Field = :Value"
+                };
+                await dynamoDBClient.UpdateItemAsync(dynamoRequest);
+                return true;
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine("ERROR : StoreContactToDynamoDB :" + error.Message);
+                Console.WriteLine(error.StackTrace);
+                return false;
+            }
         }
 
     }
