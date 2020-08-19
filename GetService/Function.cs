@@ -114,7 +114,7 @@ namespace GetService
                     {
                         Console.WriteLine("Service : " + response);
                         switch(response){
-                            case "Feedback_CXM":
+                            case "Feedback":
                                 cxmServiceArea = "customer_feedback_nbc_feedback";
                                 break;
                             case "EnvironmentalHealth":
