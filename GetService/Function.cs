@@ -29,7 +29,7 @@ namespace GetService
         private static String taskToken;
         private static String cxmEndPoint;
         private static String cxmAPIKey;
-        private static String tableName;
+        private static String tableName = "MailBotCasesTest";
 
         private Secrets secrets = null;
 
@@ -38,63 +38,47 @@ namespace GetService
         {
             if (await GetSecrets())
             {
-                String instance = Environment.GetEnvironmentVariable("instance");
+                Boolean liveInstance = false;
                 JObject o = JObject.Parse(input.ToString());
                 caseReference = (string)o.SelectToken("CaseReference");
                 taskToken = (string)o.SelectToken("TaskToken");
                 try
                 {
-                    if (context.InvokedFunctionArn.ToLower().Contains("alpha"))
-                    {
-                        Console.WriteLine("DEV Version");
-                        tableName = "MailBotCasesTest";
-                    }
-                    else if (context.InvokedFunctionArn.ToLower().Contains("beta"))
-                    {
-                        Console.WriteLine("Beta Version");
-                        tableName = "MailBotCasesTest";
-                    }
-                    else if (context.InvokedFunctionArn.ToLower().Contains("prod"))
+                    if (context.InvokedFunctionArn.ToLower().Contains("prod"))
                     {
                         Console.WriteLine("Prod version");
+                        liveInstance = true;
                         tableName = "MailBotCasesLive";
                     }
                     else
                     {
-                        Console.WriteLine("Undefined Version");
-                        tableName = "MailBotCasesTest";
+                        Console.WriteLine("Beta Version");
                     }
                 }
                 catch(Exception)
                 {
-                    Console.WriteLine("Undefined Version");
-                    tableName = "MailBotCasesTest";
+                    Console.WriteLine("Beta Version");
                 }
- 
-                switch (instance.ToLower())
+
+                if (liveInstance)
                 {
-                    case "live":
-                        cxmEndPoint = secrets.cxmEndPointLive;
-                        cxmAPIKey = secrets.cxmAPIKeyLive;
-                        String cxmServiceAreaLive = await GetCaseDetailsAsync();
-                        if(await UpdateCaseDetailsAsync(cxmServiceAreaLive))
-                        {
-                            await SendSuccessAsync();
-                        }                      
-                        break;
-                    case "test":
-                        cxmEndPoint = secrets.cxmEndPointTest;
-                        cxmAPIKey = secrets.cxmAPIKeyTest;
-                        String cxmServiceAreaTest = await GetCaseDetailsAsync();
-                        if (await UpdateCaseDetailsAsync(cxmServiceAreaTest))
-                        {
-                            await SendSuccessAsync();
-                        }
-                        break;
-                    default:
-                        await SendFailureAsync("Instance not Live or Test : " + instance.ToLower(), "Lambda Parameter Error");
-                        Console.WriteLine("ERROR : Instance not Live or Test : " + instance.ToLower());
-                        break;
+                    cxmEndPoint = secrets.cxmEndPointLive;
+                    cxmAPIKey = secrets.cxmAPIKeyLive;
+                    String cxmServiceAreaLive = await GetCaseDetailsAsync();
+                    if (await UpdateCaseDetailsAsync(cxmServiceAreaLive))
+                    {
+                        await SendSuccessAsync();
+                    }
+                }
+                else
+                {
+                    cxmEndPoint = secrets.cxmEndPointTest;
+                    cxmAPIKey = secrets.cxmAPIKeyTest;
+                    String cxmServiceAreaTest = await GetCaseDetailsAsync();
+                    if (await UpdateCaseDetailsAsync(cxmServiceAreaTest))
+                    {
+                        await SendSuccessAsync();
+                    }
                 }
             }
         }
